@@ -24,9 +24,10 @@
   .calendar-day { background: #fafafa; border: 1px solid #eee; min-height: 60px; padding: 2px; border-radius: 4px; font-size: 10px; text-align: left; }
   .calendar-day .date-num { font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 2px; }
   
-  .badge { background: #e8f5e9; color: #2e7d32; border-radius: 3px; padding: 2px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; line-height: 1.1; }
+  /* コンパクト化したバッジ */
+  .badge { background: #e8f5e9; color: #2e7d32; border-radius: 3px; padding: 1px 2px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: bold; line-height: 1.2; white-space: nowrap; }
   .badge-imouto { background: #fff3e0; color: #e65100; }
-  .btn-del { background: #e53935; color: white; border: none; border-radius: 2px; font-size: 8px; cursor: pointer; padding: 0 3px; margin-left: 2px; }
+  .btn-del { background: #e53935; color: white; border: none; border-radius: 2px; font-size: 9px; cursor: pointer; padding: 0 3px; margin-left: 2px; line-height: 1; }
   
   .total-box { background-color: #eef7ee; padding: 12px; border-radius: 8px; margin-top: 10px; }
   .total-row { font-weight: bold; font-size: 16px; color: #2e7d32; display: flex; justify-content: space-between; margin-bottom: 5px; }
@@ -112,9 +113,12 @@
         const badge = document.createElement('div');
         badge.className = `badge ${item.child === '妹ちゃん' ? 'badge-imouto' : ''}`;
         
-        const shortChild = item.child.replace('ちゃん','').replace('お','');
+        // 「お兄ちゃん」→「兄」、「妹ちゃん」→「妹」にし、「手伝い①」から数字記号（①）のみを抽出
+        const nameShort = item.child === "お兄ちゃん" ? "兄" : "妹";
+        const numSymbol = item.label ? item.label.replace("手伝い", "") : "";
+        
         badge.innerHTML = `
-          <span>${shortChild}:${item.label}</span>
+          <span>${nameShort}${numSymbol}</span>
           <button class="btn-del" onclick="deleteItem(${item.id})">×</button>
         `;
         dayEl.appendChild(badge);

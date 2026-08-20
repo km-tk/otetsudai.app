@@ -45,11 +45,11 @@
     <div class="flex-group">
       <div>
         <label style="font-weight:normal;">お兄ちゃん基本額</label>
-        <input type="number" id="oniBaseRate" value="50">
+        <input type="number" id="oniBaseRate" value="20">
       </div>
       <div>
         <label style="font-weight:normal;">妹ちゃん基本額</label>
-        <input type="number" id="imoutoBaseRate" value="50">
+        <input type="number" id="imoutoBaseRate" value="20">
       </div>
     </div>
   </div>
@@ -95,7 +95,6 @@
       return;
     }
 
-    // 今日の対象児の既存件数をチェック（最大3回制限）
     const pendingList = JSON.parse(localStorage.getItem('pendingList') || '[]');
     const approvedList = JSON.parse(localStorage.getItem('approvedList') || '[]');
     

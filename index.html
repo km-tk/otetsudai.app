@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お手伝いお小遣い管理</title>
+<style>
+  body { font-family: sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #333; }
+  .card { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  h2 { margin-top: 0; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+  label { font-size: 12px; color: #666; display: block; margin-top: 8px; }
+  input, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+  .btn { width: 100%; padding: 10px; border: none; background: #4CAF50; color: white; font-weight: bold; border-radius: 6px; margin-top: 10px; cursor: pointer; }
+  .btn-approve { background: #2196F3; width: auto; padding: 6px 12px; margin: 0; }
+  .request-item { background: #fff8e1; padding: 10px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .total { font-weight: bold; font-size: 16px; color: #2e7d32; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>お手伝いノート</h1>
+
+<!-- 1. メールアドレス設定 -->
+<div class="card">
+  <h2>1. 通知先設定（親）</h2>
+  <label>父のメールアドレス</label>
+  <input type="email" id="fatherEmail" value="father@example.com">
+  <label>母のメールアドレス</label>
+  <input type="email" id="motherEmail" value="mother@example.com">
+</div>
+
+<!-- 2. 子供の申請画面 -->
+<div class="card">
+  <h2>2. お手伝い申請（子供）</h2>
+  <label>名前</label>
+  <select id="childSelect">
+    <option value="お兄ちゃん">お兄ちゃん</option>
+    <option value="妹ちゃん">妹ちゃん</option>
+  </select>
+
+  <label>内容と金額</label>
+  <select id="taskSelect">
+    <option value="50">① お皿洗い（50円）</option>
+    <option value="100">② 部屋の掃除（100円）</option>
+    <option value="30">③ ゴミ出し（30円）</option>
+  </select>
+
+  <label>特別なお手伝い（手入力調整）</label>
+  <input type="number" id="customAmount" placeholder="金額を直接入力する場合はここ">
+
+  <button class="btn" onclick="sendRequest()">父母へ申請メールを送る</button>
+</div>
+
+<!-- 3. 親の承認画面（ログイン想定） -->
+<div class="card">
+  <h2>3. 承認待ちリスト（親ログインエリア）</h2>
+  <div id="requestList">
+    <!-- 申請データがここに届く -->
+  </div>
+</div>
+
+<!-- 4. 累計金額表示 -->
+<div class="card">
+  <h2>4. 今月の累計</h2>
+  <div class="total">お兄ちゃん: <span id="oniTotal">0</span> 円</div>
+  <div class="total">妹ちゃん: <span id="imoutoTotal">0</span> 円</div>
+</div>
+
+<script>
+  let totals = { "お兄ちゃん": 0, "妹ちゃん": 0 };
+
+  function sendRequest() {
+    const child = document.getElementById('childSelect').value;
+    const taskSelect = document.getElementById('taskSelect');
+    const taskName = taskSelect.options[taskSelect.selectedIndex].text;
+    const customAmount = document.getElementById('customAmount').value;
+    
+    // 金額決定（手入力があればそちらを優先）
+    const amount = customAmount ? parseInt(customAmount) : parseInt(taskSelect.value);
+    
+    const father = document.getElementById('fatherEmail').value;
+    const mother = document.getElementById('motherEmail').value;
+
+    // 本来はここで EmailJS 等のライブラリを使ってメール送信
+    alert(`【通知送信完了】\n${father} および ${mother} に承認依頼メールを送りました！`);
+
+    // 承認待ちリストに追加
+    const list = document.getElementById('requestList');
+    const item = document.createElement('div');
+    item.className = 'request-item';
+    item.innerHTML = `
+      <span><b>${child}</b>: ${taskName} (${amount}円)</span>
+      <button class="btn btn-approve" onclick="approve(this, '${child}', ${amount})">承認</button>
+    `;
+    list.appendChild(item);
+
+    // 入力クリア
+    document.getElementById('customAmount').value = '';
+  }
+
+  function approve(btn, child, amount) {
+    // 累計に加算
+    totals[child] += amount;
+    
+    // 画面更新
+    document.getElementById('oniTotal').innerText = totals["お兄ちゃん"];
+    document.getElementById('imoutoTotal').innerText = totals["妹ちゃん"];
+
+    // 完了表示へ切り替え
+    const parent = btn.parentElement;
+    parent.style.background = '#e8f5e9';
+    parent.innerHTML = `<span><b>【承認済み】</b> ${child} - ${amount}円加算完了</span>`;
+  }
+</script>
+
+</body>
+</html>

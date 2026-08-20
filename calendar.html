@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お手伝いお小遣いノート - カレンダー</title>
+<style>
+  body { font-family: sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; }
+  .card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  h1 { text-align: center; color: #4a4a4a; font-size: 20px; margin-bottom: 15px; }
+  h2 { margin-top: 0; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 6px; color: #2c3e50; }
+  .btn { width: 100%; padding: 10px; border: none; background: #78909C; color: white; font-weight: bold; font-size: 14px; border-radius: 8px; cursor: pointer; text-align: center; text-decoration: none; display: block; box-sizing: border-box; margin-bottom: 15px; }
+  
+  /* カレンダーの見た目 */
+  .month-picker { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .calendar-header { font-size: 12px; font-weight: bold; color: #666; padding: 5px 0; }
+  .calendar-day { background: #fafafa; border: 1px solid #eee; min-height: 55px; padding: 2px; border-radius: 4px; font-size: 10px; text-align: left; }
+  .calendar-day .date-num { font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 2px; }
+  .badge { background: #e8f5e9; color: #2e7d32; border-radius: 3px; padding: 1px 2px; margin-bottom: 2px; display: block; font-size: 9px; line-height: 1.1; }
+  .badge-imouto { background: #fff3e0; color: #e65100; }
+  
+  .total-box { background-color: #eef7ee; padding: 12px; border-radius: 8px; margin-top: 10px; }
+  .total-row { font-weight: bold; font-size: 16px; color: #2e7d32; display: flex; justify-content: space-between; margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>承認済み履歴・カレンダー</h1>
+  <a href="index.html" class="btn">← 申請画面に戻る</a>
+
+  <div class="card">
+    <div class="month-picker">
+      <span id="currentMonthStr"></span>
+    </div>
+
+    <div class="calendar-grid">
+      <div class="calendar-header" style="color:red;">日</div>
+      <div class="calendar-header">月</div>
+      <div class="calendar-header">火</div>
+      <div class="calendar-header">水</div>
+      <div class="calendar-header">木</div>
+      <div class="calendar-header">金</div>
+      <div class="calendar-header" style="color:blue;">土</div>
+    </div>
+    <div id="calendarDays" class="calendar-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>今月の合計お小遣い</h2>
+    <div class="total-box">
+      <div class="total-row"><span>お兄ちゃん:</span> <span><span id="oniTotal">0</span> 円</span></div>
+      <div class="total-row" style="color: #e65100;"><span>妹ちゃん:</span> <span><span id="imoutoTotal">0</span> 円</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  document.getElementById('currentMonthStr').innerText = `${year}年 ${month + 1}月`;
+
+  function renderCalendar() {
+    const daysContainer = document.getElementById('calendarDays');
+    daysContainer.innerHTML = '';
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    const approvedList = JSON.parse(localStorage.getItem('approvedList') || '[]');
+
+    for (let i = 0; i < firstDay; i++) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'calendar-day';
+      emptyDiv.style.background = 'transparent';
+      emptyDiv.style.border = 'none';
+      daysContainer.appendChild(emptyDiv);
+    }
+
+    let oniMonthTotal = 0;
+    let imoutoMonthTotal = 0;
+
+    for (let d = 1; d <= lastDate; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day';
+      dayEl.innerHTML = `<div class="date-num">${d}</div>`;
+
+      const dayItems = approvedList.filter(item => item.date === dateStr);
+
+      dayItems.forEach(item => {
+        const badge = document.createElement('span');
+        badge.className = `badge ${item.child === '妹ちゃん' ? 'badge-imouto' : ''}`;
+        badge.innerText = `${item.child.replace('ちゃん','').replace('お','')}:${item.label}了承`;
+        dayEl.appendChild(badge);
+
+        if (item.child === "お兄ちゃん") {
+          oniMonthTotal += item.amount;
+        } else if (item.child === "妹ちゃん") {
+          imoutoMonthTotal += item.amount;
+        }
+      });
+
+      daysContainer.appendChild(dayEl);
+    }
+
+    document.getElementById('oniTotal').innerText = oniMonthTotal;
+    document.getElementById('imoutoTotal').innerText = imoutoMonthTotal;
+  }
+
+  renderCalendar();
+</script>
+
+</body>
+</html>

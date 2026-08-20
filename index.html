@@ -7,56 +7,69 @@
 <style>
   body { font-family: sans-serif; background: #f4f7f6; padding: 15px; margin: 0; color: #333; }
   .card { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  h2 { margin-top: 0; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-  label { font-size: 12px; color: #666; display: block; margin-top: 8px; }
+  h2 { margin-top: 0; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 5px; color: #2c3e50; }
+  label { font-size: 12px; color: #666; display: block; margin-top: 8px; font-weight: bold; }
   input, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-  .btn { width: 100%; padding: 10px; border: none; background: #4CAF50; color: white; font-weight: bold; border-radius: 6px; margin-top: 10px; cursor: pointer; }
+  .btn { width: 100%; padding: 10px; border: none; background: #4CAF50; color: white; font-weight: bold; border-radius: 6px; margin-top: 15px; cursor: pointer; }
   .btn-approve { background: #2196F3; width: auto; padding: 6px 12px; margin: 0; }
   .request-item { background: #fff8e1; padding: 10px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-  .total { font-weight: bold; font-size: 16px; color: #2e7d32; margin-top: 10px; }
+  .total { font-weight: bold; font-size: 16px; color: #2e7d32; margin-top: 8px; }
+  .flex-group { display: flex; gap: 10px; }
+  .flex-group > div { flex: 1; }
 </style>
 </head>
 <body>
 
 <h1>お手伝いノート</h1>
 
-<!-- 1. メールアドレス設定 -->
+<!-- 1. 設定エリア -->
 <div class="card">
-  <h2>1. 通知先設定（親）</h2>
-  <label>父のメールアドレス</label>
-  <input type="email" id="fatherEmail" value="father@example.com">
-  <label>母のメールアドレス</label>
-  <input type="email" id="motherEmail" value="mother@example.com">
+  <h2>1. 基本設定（親）</h2>
+  <label>通知先メールアドレス</label>
+  <div class="flex-group">
+    <div><input type="email" id="fatherEmail" value="father@example.com" placeholder="父メール"></div>
+    <div><input type="email" id="motherEmail" value="mother@example.com" placeholder="母メール"></div>
+  </div>
+  
+  <label>お小遣いの基本設定（1回あたりの単価）</label>
+  <div class="flex-group">
+    <div>
+      <label style="font-weight:normal;">お兄ちゃん基本額</label>
+      <input type="number" id="oniBaseRate" value="50"> 円
+    </div>
+    <div>
+      <label style="font-weight:normal;">妹ちゃん基本額</label>
+      <input type="number" id="imoutoBaseRate" value="50"> 円
+    </div>
+  </div>
 </div>
 
 <!-- 2. 子供の申請画面 -->
 <div class="card">
   <h2>2. お手伝い申請（子供）</h2>
-  <label>名前</label>
+  
+  <label>日付を選択</label>
+  <input type="date" id="taskDate">
+
+  <label>だれが？</label>
   <select id="childSelect">
     <option value="お兄ちゃん">お兄ちゃん</option>
     <option value="妹ちゃん">妹ちゃん</option>
   </select>
 
-  <label>内容と金額</label>
-  <select id="taskSelect">
-    <option value="50">① お皿洗い（50円）</option>
-    <option value="100">② 部屋の掃除（100円）</option>
-    <option value="30">③ ゴミ出し（30円）</option>
-  </select>
+  <label>お手伝いの内容</label>
+  <input type="text" id="taskNameInput" placeholder="例：お皿洗い、部屋の掃除など">
 
-  <label>特別なお手伝い（手入力調整）</label>
-  <input type="number" id="customAmount" placeholder="金額を直接入力する場合はここ">
+  <label>特別調整（基本額と違う金額にする場合のみ手入力）</label>
+  <input type="number" id="customAmount" placeholder="空欄の場合は基本額が適用されます">
 
-  <button class="btn" onclick="sendRequest()">父母へ申請メールを送る</button>
+  <button class="btn" onclick="sendRequest()">父母へ申請を送る</button>
 </div>
 
-<!-- 3. 親の承認画面（ログイン想定） -->
+<!-- 3. 親の承認画面 -->
 <div class="card">
-  <h2>3. 承認待ちリスト（親ログインエリア）</h2>
-  <div id="requestList">
-    <!-- 申請データがここに届く -->
-  </div>
+  <h2>3. 承認待ちリスト（親エリア）</h2>
+  <div id="requestList"></div>
 </div>
 
 <!-- 4. 累計金額表示 -->
@@ -67,49 +80,58 @@
 </div>
 
 <script>
+  // 初期値として今日の日付をセット
+  document.getElementById('taskDate').valueAsDate = new Date();
+
   let totals = { "お兄ちゃん": 0, "妹ちゃん": 0 };
 
   function sendRequest() {
+    const date = document.getElementById('taskDate').value;
     const child = document.getElementById('childSelect').value;
-    const taskSelect = document.getElementById('taskSelect');
-    const taskName = taskSelect.options[taskSelect.selectedIndex].text;
+    const taskName = document.getElementById('taskNameInput').value || "お手伝い";
     const customAmount = document.getElementById('customAmount').value;
     
-    // 金額決定（手入力があればそちらを優先）
-    const amount = customAmount ? parseInt(customAmount) : parseInt(taskSelect.value);
+    // 単価の決定（手入力があれば優先、なければ設定した基本額）
+    let baseRate = 0;
+    if (child === "お兄ちゃん") {
+      baseRate = parseInt(document.getElementById('oniBaseRate').value) || 0;
+    } else {
+      baseRate = parseInt(document.getElementById('imoutoBaseRate').value) || 0;
+    }
     
-    const father = document.getElementById('fatherEmail').value;
-    const mother = document.getElementById('motherEmail').value;
-
-    // 本来はここで EmailJS 等のライブラリを使ってメール送信
-    alert(`【通知送信完了】\n${father} および ${mother} に承認依頼メールを送りました！`);
+    const amount = customAmount ? parseInt(customAmount) : baseRate;
+    
+    if (!date) {
+      alert("日付を選択してください");
+      return;
+    }
 
     // 承認待ちリストに追加
     const list = document.getElementById('requestList');
     const item = document.createElement('div');
     item.className = 'request-item';
     item.innerHTML = `
-      <span><b>${child}</b>: ${taskName} (${amount}円)</span>
+      <span><b>[${date}] ${child}</b><br>${taskName} (${amount}円)</span>
       <button class="btn btn-approve" onclick="approve(this, '${child}', ${amount})">承認</button>
     `;
     list.appendChild(item);
 
-    // 入力クリア
+    // フォームの一部リセット
     document.getElementById('customAmount').value = '';
+    document.getElementById('taskNameInput').value = '';
+    
+    alert(`【画面上に申請を追加しました】\n※実際にメールを届けるにはEmailJSの設定が必要です。`);
   }
 
   function approve(btn, child, amount) {
-    // 累計に加算
     totals[child] += amount;
     
-    // 画面更新
     document.getElementById('oniTotal').innerText = totals["お兄ちゃん"];
     document.getElementById('imoutoTotal').innerText = totals["妹ちゃん"];
 
-    // 完了表示へ切り替え
     const parent = btn.parentElement;
     parent.style.background = '#e8f5e9';
-    parent.innerHTML = `<span><b>【承認済み】</b> ${child} - ${amount}円加算完了</span>`;
+    parent.innerHTML = `<span><b>【承認済み】</b> ${parent.querySelector('span').innerHTML}</span>`;
   }
 </script>
 

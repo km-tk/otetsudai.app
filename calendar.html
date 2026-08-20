@@ -12,14 +12,15 @@
   h2 { margin-top: 0; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 6px; color: #2c3e50; }
   .btn { width: 100%; padding: 10px; border: none; background: #78909C; color: white; font-weight: bold; font-size: 14px; border-radius: 8px; cursor: pointer; text-align: center; text-decoration: none; display: block; box-sizing: border-box; margin-bottom: 15px; }
   
-  /* カレンダーの見た目 */
   .month-picker { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
   .calendar-header { font-size: 12px; font-weight: bold; color: #666; padding: 5px 0; }
-  .calendar-day { background: #fafafa; border: 1px solid #eee; min-height: 55px; padding: 2px; border-radius: 4px; font-size: 10px; text-align: left; }
+  .calendar-day { background: #fafafa; border: 1px solid #eee; min-height: 60px; padding: 2px; border-radius: 4px; font-size: 10px; text-align: left; }
   .calendar-day .date-num { font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 2px; }
-  .badge { background: #e8f5e9; color: #2e7d32; border-radius: 3px; padding: 1px 2px; margin-bottom: 2px; display: block; font-size: 9px; line-height: 1.1; }
+  
+  .badge { background: #e8f5e9; color: #2e7d32; border-radius: 3px; padding: 2px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; line-height: 1.1; }
   .badge-imouto { background: #fff3e0; color: #e65100; }
+  .btn-del { background: #e53935; color: white; border: none; border-radius: 2px; font-size: 8px; cursor: pointer; padding: 0 3px; margin-left: 2px; }
   
   .total-box { background-color: #eef7ee; padding: 12px; border-radius: 8px; margin-top: 10px; }
   .total-row { font-weight: bold; font-size: 16px; color: #2e7d32; display: flex; justify-content: space-between; margin-bottom: 5px; }
@@ -93,9 +94,14 @@
       const dayItems = approvedList.filter(item => item.date === dateStr);
 
       dayItems.forEach(item => {
-        const badge = document.createElement('span');
+        const badge = document.createElement('div');
         badge.className = `badge ${item.child === '妹ちゃん' ? 'badge-imouto' : ''}`;
-        badge.innerText = `${item.child.replace('ちゃん','').replace('お','')}:${item.label}了承`;
+        
+        const shortChild = item.child.replace('ちゃん','').replace('お','');
+        badge.innerHTML = `
+          <span>${shortChild}:${item.label}</span>
+          <button class="btn-del" onclick="deleteItem(${item.id})">×</button>
+        `;
         dayEl.appendChild(badge);
 
         if (item.child === "お兄ちゃん") {
@@ -110,6 +116,16 @@
 
     document.getElementById('oniTotal').innerText = oniMonthTotal;
     document.getElementById('imoutoTotal').innerText = imoutoMonthTotal;
+  }
+
+  function deleteItem(id) {
+    if (!confirm("このお手伝い記録を修正削除しますか？")) return;
+
+    let approvedList = JSON.parse(localStorage.getItem('approvedList') || '[]');
+    approvedList = approvedList.filter(item => item.id !== id);
+
+    localStorage.setItem('approvedList', JSON.stringify(approvedList));
+    renderCalendar();
   }
 
   renderCalendar();
